@@ -39,7 +39,7 @@ public class CardDeliveryTest {
     @Test
     public void shouldNotSuccessIfEarlyDate() {
         //Тут просто практикуюсь в Xpath, хоть и точный путь до элемента (с условием наличия input_invalid)
-        // при проверке сообщения об ошибке в CSS будет намного короче
+        //при проверке сообщения об ошибке в CSS будет намного короче
 
         open("http://localhost:9999/");
         $x("//*[@data-test-id='city']//input").setValue("Орёл");
@@ -110,5 +110,49 @@ public class CardDeliveryTest {
         $("[data-test-id='agreement']").click();
         $(withText("Забронировать")).click();
         $("[data-test-id='phone'].input_invalid .input__sub").should(appear).shouldHave(text("Поле обязательно для заполнения"));
+    }
+
+
+    // -------------------- ДОМАШНЕЕ ЗАДАНИЕ №2 -----------------------
+
+    @Test
+    public void shouldChooseCityFromList() {
+        open("http://localhost:9999/");
+        $("[data-test-id='city'] input").setValue("Ка");
+        $(withText("Казань")).click();
+        clear("[data-test-id='date'] input");
+        $("[data-test-id='date'] input").setValue(dateCalculate(3));
+        $("[data-test-id='name'] input").setValue("Артур Казанский");
+        $("[data-test-id='phone'] input").setValue("+79031234567");
+        $("[data-test-id='agreement']").click();
+        $(withText("Забронировать")).click();
+        $("[data-test-id='notification']").should(appear, Duration.ofSeconds(15)).should(have(text("Успешно!")));
+    }
+
+    @Test
+    public void shouldChooseDateFromCalendar() {
+        open("http://localhost:9999/");
+        $("[data-test-id='city'] input").setValue("Курск");
+        $("[data-test-id='date'] input").click();
+
+        // Блок установки дня из календаря, в поле daysPlus ввести через какое количество дней от текущего
+        // нужно забронировать доставку карты
+        int daysPlus = 7;
+        //----------------  Код блока расчета  ------------------------------
+        int remainingDays = $$("[data-day]").size();
+        if (remainingDays <= (daysPlus - 3)) {
+            $("[data-step='1']").click();
+            $$("[data-day]").get(daysPlus - 3 - remainingDays).click();
+        } else {
+            $$("[data-day]").get(daysPlus - 3).click();
+        }
+        //---------------- Конец блока выбора дня из календаря ---------------
+
+        $("[data-test-id='name'] input").setValue("Филипп Матвеев");
+        $("[data-test-id='phone'] input").setValue("+11111111111");
+        $("[data-test-id='agreement']").click();
+        $(withText("Забронировать")).click();
+        $("[data-test-id='notification']").should(appear, Duration.ofSeconds(15)).should(have(text("Успешно!")));
+        $("[data-test-id='notification']").shouldHave(text(dateCalculate(daysPlus)));
     }
 }
